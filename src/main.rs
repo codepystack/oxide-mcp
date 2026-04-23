@@ -357,13 +357,13 @@ fn handle_tools_call(id: RequestId, params: Value) -> Value {
         }
     };
 
-    let _ = params.arguments;
     error_response(
         id,
         TOOL_NOT_FOUND,
         "Tool not found",
         Some(json!({
-            "toolName": params.name
+            "toolName": params.name,
+            "argumentsProvided": !params.arguments.is_null(),
         })),
     )
 }
@@ -402,12 +402,14 @@ fn handle_prompts_get(id: RequestId, params: Value) -> Value {
         }
     };
 
-    let _ = params.arguments;
     error_response(
         id,
         PROMPT_NOT_FOUND,
         "Prompt not found",
-        Some(json!({ "name": params.name })),
+        Some(json!({
+            "name": params.name,
+            "argumentsProvided": !params.arguments.is_null(),
+        })),
     )
 }
 
@@ -424,15 +426,18 @@ fn handle_completion_complete(id: RequestId, params: Value) -> Value {
         }
     };
 
-    let _ = params.r#ref;
-    let _ = params.argument;
     success_response(
         id,
         json!({
             "completion": {
                 "values": [],
-                "hasMore": false
-            }
+                "hasMore": false,
+                "total": 0,
+            },
+            "metadata": {
+                "hasReference": !params.r#ref.is_null(),
+                "hasArgument": !params.argument.is_null(),
+            },
         }),
     )
 }
