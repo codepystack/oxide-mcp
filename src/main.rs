@@ -103,12 +103,23 @@ enum InitState {
     Initialized,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct SessionState {
     init_state: InitState,
     client_info: Option<ImplementationInfo>,
     client_capabilities: Value,
     log_level: String,
+}
+
+impl Default for SessionState {
+    fn default() -> Self {
+        Self {
+            init_state: InitState::default(),
+            client_info: None,
+            client_capabilities: Value::Object(Default::default()),
+            log_level: "info".to_string(),
+        }
+    }
 }
 
 fn main() {
@@ -454,6 +465,25 @@ fn handle_logging_set_level(id: RequestId, params: Value, state: &mut SessionSta
             );
         }
     };
+
+    const LOG_LEVELS: &[&str] = &[
+        "debug",
+        "info",
+        "notice",
+        "warning",
+        "error",
+        "critical",
+        "alert",
+        "emergency",
+    ];
+    if !LOG_LEVELS.contains(&params.level.as_str()) {
+        return error_response(
+            id,
+            INVALID_PARAMS,
+            "Invalid logging level",
+            Some(json!({ "supported": LOG_LEVELS })),
+        );
+    }
 
     state.log_level = params.level;
     success_response(id, json!({}))
