@@ -37,8 +37,6 @@ struct JsonRpcRequest {
 struct JsonRpcNotification {
     jsonrpc: String,
     method: String,
-    #[serde(default)]
-    params: Value,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -97,17 +95,12 @@ struct CompletionCompleteParams {
     argument: Value,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 enum InitState {
+    #[default]
     Uninitialized,
     Initializing,
     Initialized,
-}
-
-impl Default for InitState {
-    fn default() -> Self {
-        Self::Uninitialized
-    }
 }
 
 #[derive(Debug, Default)]
@@ -237,7 +230,8 @@ fn handle_notification(notification: JsonRpcNotification, state: &mut SessionSta
     if notification.jsonrpc != JSONRPC_VERSION {
         return;
     }
-    if notification.method == "notifications/initialized" && state.init_state == InitState::Initializing
+    if notification.method == "notifications/initialized"
+        && state.init_state == InitState::Initializing
     {
         state.init_state = InitState::Initialized;
     }
@@ -263,7 +257,9 @@ fn handle_request(request: JsonRpcRequest, state: &mut SessionState) -> Value {
         "tools/list" => success_response(request.id, json!({ "tools": [] })),
         "tools/call" => handle_tools_call(request.id, request.params),
         "resources/list" => success_response(request.id, json!({ "resources": [] })),
-        "resources/templates/list" => success_response(request.id, json!({ "resourceTemplates": [] })),
+        "resources/templates/list" => {
+            success_response(request.id, json!({ "resourceTemplates": [] }))
+        }
         "resources/read" => handle_resources_read(request.id, request.params),
         "prompts/list" => success_response(request.id, json!({ "prompts": [] })),
         "prompts/get" => handle_prompts_get(request.id, request.params),
